@@ -169,7 +169,7 @@ void thetaVDriver::cv2sensorImgComp(cv::Mat mat, sensor_msgs::CompressedImage& s
     if (enc::isColor(dummy.encoding))
     {
       cv::cvtColor(mat, mat, CV_BGR2RGB);
-      targetFormat << "bgr" << bitDepth;
+      targetFormat << "rgb" << bitDepth;
     }
     try
     {
