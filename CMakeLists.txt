@@ -1,62 +1,71 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(theta_v_ros)
 
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    rospy
-    std_srvs
-    sensor_msgs
-    cv_bridge
-)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
-set( Boost_USE_MULTITHREADED 1 )
-find_package( Boost 1.53 REQUIRED system thread timer )
-find_package( PkgConfig )
-pkg_check_modules( GSTREAMER_1_0 gstreamer-1.0 )
-pkg_check_modules( GSTREAMER_1_0_APP gstreamer-app-1.0 )
-pkg_check_modules( LIBUVC libuvc )
-include_directories( ${GSTREAMER_1_0_INCLUDE_DIRS} )
-include_directories( ${GSTREAMER_1_0_APP_INCLUDE_DIRS} )
-include_directories( ${LIBUVC_INCLUDE_DIRS} )
+find_package(image_transport REQUIRED)
+find_package(compressed_image_transport REQUIRED)
+find_package(Boost 1.71 REQUIRED COMPONENTS system thread timer)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GSTREAMER_1_0 REQUIRED gstreamer-1.0)
+pkg_check_modules(GSTREAMER_1_0_APP REQUIRED gstreamer-app-1.0)
+pkg_check_modules(LIBUVC REQUIRED libuvc)
+
 include_directories(
- # include
- ${catkin_INCLUDE_DIRS}
- ${OpenCV_INCLUDE_DIRS}
-)
-include_directories(
+    /usr/include/libuvc
+    ${GSTREAMER_1_0_INCLUDE_DIRS}
+    ${GSTREAMER_1_0_APP_INCLUDE_DIRS}
+    ${LIBUVC_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${compressed_image_transport_INCLUDE_DIRS}
     /usr/include/libavcodec
     /usr/include/libavformat
     /usr/include/libswscale
-    )
-
-catkin_package()
-
-####################################################################################################
-# Project
-####################################################################################################
-
-FILE(GLOB theta_source
-    "src/thetauvc/thetauvc.h"
-    "src/thetauvc/thetauvc.c"
-    "src/ffmpeg/H264Decoder.cpp"
-    "src/ffmpeg/H264Decoder.h"
-    "src/driver.cpp"
-    "src/driver.h"
 )
 
+add_executable(driver
+    src/node.cpp          # main() はここにある
+    src/driver.cpp        # クラス定義だけ
+    src/ffmpeg/H264Decoder.cpp
+    src/thetauvc/thetauvc.c
+)
 
-add_executable( driver src/node.cpp  ${theta_source} )
-add_dependencies(driver theta_v_ros_generate_messages_cpp)
-target_link_libraries( driver
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
+target_link_libraries(driver
     ${GSTREAMER_1_0_LIBRARIES}
-    ${LIBUVC_LIBRARIES}
     ${GSTREAMER_1_0_APP_LIBRARIES}
-    ${OpenCV_LIBS}
+    ${LIBUVC_LIBRARIES}
     /usr/lib/x86_64-linux-gnu/libavcodec.so
     /usr/lib/x86_64-linux-gnu/libavformat.so
     /usr/lib/x86_64-linux-gnu/libswscale.so
     /usr/lib/x86_64-linux-gnu/libavutil.so
-    )
+)
+
+ament_target_dependencies(driver
+    rclcpp
+    std_srvs
+    sensor_msgs
+    cv_bridge
+    OpenCV
+    Boost
+    image_transport
+    compressed_image_transport
+)
+
+install(TARGETS driver
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
+ament_package()
