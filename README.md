@@ -1,5 +1,8 @@
 # Ricoh theta V driver node for ROS
 
+[参考]
+
+https://qiita.com/onushi-k/items/8440ba1add465ba9c38b
 
  Ros node for get equirectangular image of Ricoh theta V camera(https://theta360.com/en/about/theta/v.html).
  
